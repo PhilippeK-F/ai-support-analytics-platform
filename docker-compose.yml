@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: support-analytics-postgres
+    environment:
+      POSTGRES_DB: support_analytics
+      POSTGRES_USER: support
+      POSTGRES_PASSWORD: support
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: support-analytics-api
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app
+      - ./data:/app/data
+
+  grafana:
+    image: grafana/grafana-oss:10.4.2
+    container_name: support-analytics-grafana
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  postgres_data:
+  grafana_data:
